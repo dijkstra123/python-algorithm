@@ -1,0 +1,44 @@
+class graph:
+    def __init__(self,gi,bo): # 输入二部图两个顶点集合的数目，每个集合的顶点均用1, ... , n表示
+        self.numg=gi # 女孩数量
+        self.numb=bo # 男孩数量
+        self.boy={i:[]for i in range(1,bo+1)} # 男孩的可连接对象，建图
+        self.viag=[0 for i in range(gi+1)] # 记录当前匹配女孩的对象
+        self.use=[0 for i in range(gi+1)] # 检查女孩是否被搜索过
+    def add(self,u,v):
+        self.boy[v].append(u)
+    def find(self,j): # 寻找 j 男孩起始的增广路
+        if j==0:
+            return 1
+        for i in self.boy[j]:
+            if self.use[i]==0: # 女孩没有被搜索过
+                self.use[i]=1
+                if self.find(self.viag[i]): # 检查 j 霸占女孩后，女孩原男友是否有新的女友，有则表示存在增广路
+                    self.viag[i]=j
+                    return 1
+        return 0
+    def Hungarian(self):
+        sum=0
+        for i in range(1,self.numb+1): # 检查每个男孩是否能找到女有
+            self.use = [0 for i in range(self.numg + 1)] # 初始化为0
+            if self.find(i):
+                sum+=1
+        return sum,self.viag[1:]
+
+if __name__=="__main__":
+    n,girlnum,boynum = map(int, input().split())
+    dic = graph(girlnum,boynum)
+    for i in range(n):
+        a, b = map(int, input().split())
+        dic.add(a,b)
+    print(dic.Hungarian())
+# 输入：
+# 6 3 3
+# 1 1
+# 1 2
+# 1 3
+# 2 1
+# 2 3
+# 3 1
+# 输出：
+# (3, [2, 3, 1])
