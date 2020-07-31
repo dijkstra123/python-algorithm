@@ -1,0 +1,76 @@
+from queue import Queue
+from queue import PriorityQueue
+class graph:
+    def __init__(self,_s,_t,_m): # 源，汇，顶点个数
+        self._edge={}
+        self.s=_s # 源
+        self.t=_t # 汇
+        self.num=_m # 顶点个数
+        self.level=[-1 for i in range(_m+1)] # 标签高度
+        self.flow=[0 for i in range(_m+1)] # 每个点的储存流量
+    def add_edge(self,u,v,w):
+        if u in self._edge:
+            self._edge[u][v]=w
+        else:
+            self._edge[u]={v:w}
+    def bfs(self): # 使用bfs标号，t=0，向上搜索
+        q = Queue()
+        q.put(self.t)
+        self.level[self.t]=0
+        while not q.empty():
+            vertice=q.get()
+            for i in self._edge[vertice]:
+                if self.level[i] == -1 and self._edge[i][vertice] != 0: # i点未被标号 且 i到vertice点的边有权值（可到达）
+                    self.level[i] = self.level[vertice] + 1
+                    q.put(i)
+    def relabel(self, v): # 重置标号 寻找v点到下一个点中最小高度
+        mi=self.num+1
+        for i in self._edge[v]:
+            if self._edge[v][i] != 0:
+                mi=min(mi,self.level[i])
+        self.level[v]=mi+1
+    def push_relabel(self): # 最高标号推进
+        self.bfs()
+        self.level[self.s]=self.num # s 点的标号为n（顶点数）
+        p=PriorityQueue() # 使用优先队列,按照标号等级排序，优先弹出等级高的
+        for i in self._edge[self.s]: # s 特殊处理
+            if self._edge[self.s][i] != 0:
+                _min = self._edge[self.s][i]
+                self.flow[i] += _min
+                self._edge[self.s][i] -= _min
+                self._edge[i][self.s] += _min
+                p.put((-self.level[i], i))
+        while not p.empty():
+            v=p.get()[1]
+            for i in self._edge[v]:
+                if self.flow[v] == 0: # 该点流值为0，直接下一个点
+                    break
+                if self.level[i] == self.level[v] - 1 and self._edge[v][i] != 0: # 若点 i 为 v 的下一等级点 且 v 到 i 有边
+                    _min = min(self.flow[v], self._edge[v][i])
+                    self.flow[i]+=_min
+                    self.flow[v]-=_min
+                    self._edge[v][i]-=_min
+                    self._edge[i][v]+=_min
+                    p.put((-self.level[i],i))
+            if self.flow[v] != 0 and v != self.t and v != self.s: # 如果 v 点的流值不为0，重置标签
+                self.relabel(v)
+                p.put((-self.level[v],v))
+        return self.flow[self.t]
+
+if __name__=="__main__":
+    n,m=map(int,input().split()) # n: 边数，s=1,t=m
+    network=graph(1,m,m)
+    for i in range(n):
+        a,b,c=map(int,input().split())
+        network.add_edge(a,b,c)
+        network.add_edge(b,a,0)
+    print(network.push_relabel())
+# 输入：
+# 5 4
+# 1 2 40
+# 1 4 20
+# 2 4 20
+# 2 3 30
+# 3 4 10
+# 输出：
+# 50
