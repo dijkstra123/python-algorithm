@@ -1,0 +1,57 @@
+class match:
+    def __init__(self,_n,_m):
+        self.gsort=[] # 女生对男生排序
+        self.bsort=[[0 for i in range(_n)] for j in range(_m)] # 男生对女生排序
+        self.used=[[0 for i in range(_m)] for j in range(_n)] # 记录女生是否被男生拒绝过
+        self.boywife=[-1 for i in range(_m)] # 记录男生的配对对象
+        self.girl_noboy=[i for i in range(_n)] # 单身女生群
+    def girlsort(self,a):
+        self.gsort.append(a)
+    def boysort(self,num,b):
+        i=0
+        for j in b:
+            i+=1
+            self.bsort[num][j]=i
+    def boy_select(self,boy,girl): # 选择成功返回 1 选择失败返回 0
+        if self.boywife[boy] == -1: # 如果该男生未被配对，直接配对
+            self.boywife[boy] = girl
+            return 1
+        elif self.bsort[boy][girl] < self.bsort[boy][self.boywife[boy]]: # 如果该男生更加偏爱当前女生，男生的对象改变为该女生，丢弃女生加入单身群
+            self.girl_noboy.append(self.boywife[boy])
+            self.boywife[boy] = girl
+            return 1
+        else:
+            return 0
+    def find(self,x): # 为第x个女生寻找配偶
+        for i in self.gsort[x]:
+            if self.used[x][i] == 0: # 如果已经拒绝过，下一个
+                self.used[x][i] = 1
+                if self.boy_select(i,x): # 尝试和男生配对
+                    return
+    def Gale_Shapley(self):
+        while self.girl_noboy != []: # 单身群为空时结束
+            x = self.girl_noboy.pop() # 弹出单身女性
+            self.find(x) # 为女生找对象
+        return self.boywife
+if __name__=="__main__":
+    n,m=map(int,input().split()) # n: 女生数，m: 男生数
+    p=match(n,m)
+    for i in range(n): # 输入每个女生心目中男生排序
+        a=list(map(int,input().split()))
+        p.girlsort(a)
+    for i in range(m): # 输入每个男生心目中女生排序
+        a=list(map(int,input().split()))
+        p.boysort(i,a)
+    print(p.Gale_Shapley())
+# 输入：
+# 4 4
+# 0 1 2 3
+# 1 0 2 3
+# 3 0 1 2
+# 0 3 2 1
+# 2 0 3 1
+# 0 1 2 3
+# 1 0 2 3
+# 0 1 3 2
+# 输出：（男生的对象）
+# [2, 0, 1, 3]
