@@ -1,0 +1,78 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+#define min(a,b) (a<b)?(a):(b)
+struct{
+    int to,next;
+    long long wi;
+}edge[10010];
+int n,m,s,t,ord=1,head[201],level[201],cur[201];
+long long value,max=2147483649;
+void add(int x,int y,int z){
+    ord++;
+    edge[ord].to=y;
+    edge[ord].wi=z;
+    edge[ord].next=head[x];
+    head[x]=ord;
+}
+int bfs(){//构建层次网络
+    int i,j,fa,ch,queue[10000000],rear,front;
+    rear=front=0;
+    for(i=1;i<=n;i++){level[i]=-1;}//初始化层次为-1
+    level[s]=0;//源点层次为0
+    cur[s]=head[s];
+    queue[rear++]=s;//源点入队
+    while(rear!=front){
+        fa=queue[front++];
+        for(i=head[fa];i!=0;i=edge[i].next){
+            if(level[edge[i].to]==-1&&edge[i].wi!=0){//点未被遍历且剩余网络中有边（权值不为0）
+                level[edge[i].to]=level[fa]+1;//层次增加
+                cur[edge[i].to]=head[edge[i].to];
+                if(edge[i].to==t){//遍历至汇点停止，无需进行下去，这里我们找的是最短增广路
+                    return 1;
+                }
+                queue[rear++]=edge[i].to;
+            }
+        }
+    }
+    return 0;
+}
+long long dfs(int x0,long long flow){
+    int i;
+    long long j;
+    long long rest=flow;
+    if(x0==t){
+        return flow;
+    }
+    for(i=cur[x0];i!=0;i=edge[i].next){
+        cur[x0]=i;//记录增广到哪条边了，弧优化。
+        if(level[edge[i].to]==level[x0]+1&&edge[i].wi!=0){
+            j=dfs(edge[i].to,min(rest,edge[i].wi));
+            if(!j){level[edge[i].to]=-1;}//当该点之后的流为0时，删除该点
+            edge[i].wi-=j;
+            edge[i^1].wi+=j;//偶数与1异或加1，奇数与1异或减一。相反边加流值。
+            rest-=j;
+            if(!rest){break;}//当前流值全流到汇点直接返回上一层。
+        }
+    }
+    return flow-rest;//返回当前层之后总流值。
+}
+void dinic(){
+    int i;
+    while(bfs()){
+        value+=dfs(s,max);
+
+    }
+}
+int main() {
+    int i,x,y,z;
+    scanf("%d%d%d%d",&n,&m,&s,&t);
+    for(i=1;i<=m;i++){
+        scanf("%d%d%d",&x,&y,&z);
+        add(x,y,z);
+        add(y,x,0);
+    }
+    dinic();
+    printf("%lld",value);
+    return 0;
+}
